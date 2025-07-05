@@ -1,5 +1,11 @@
 {
   "dependencies": {
+    "com.google.external-dependency-manager": "1.2.186",
+    "com.google.firebase.analytics": "file:E:/Project/Library/com.google.firebase.analytics-12.10.1.tgz",
+    "com.google.firebase.app": "file:E:/Project/Library/com.google.firebase.app-12.10.1.tgz",
+    "com.google.firebase.crashlytics": "file:E:/Project/Library/com.google.firebase.crashlytics-12.10.1.tgz",
+    "com.google.firebase.remote-config": "file:E:/Project/Library/com.google.firebase.remote-config-12.10.1.tgz",
+    "com.kem.ktool": "https://github.com/KemLib/KTool.git?path=/Packages/KTool#develop",
     "com.unity.collab-proxy": "2.8.2",
     "com.unity.feature.2d": "2.0.1",
     "com.unity.ide.rider": "3.0.36",
@@ -41,5 +47,14 @@
     "com.unity.modules.vr": "1.0.0",
     "com.unity.modules.wind": "1.0.0",
     "com.unity.modules.xr": "1.0.0"
-  }
+  },
+  "scopedRegistries": [
+    {
+      "name": "OpenUPM",
+      "url": "https://package.openupm.com",
+      "scopes": [
+        "com.google"
+      ]
+    }
+  ]
 }

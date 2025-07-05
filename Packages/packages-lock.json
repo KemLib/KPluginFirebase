@@ -1,5 +1,51 @@
 {
   "dependencies": {
+    "com.google.external-dependency-manager": {
+      "version": "1.2.186",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {},
+      "url": "https://package.openupm.com"
+    },
+    "com.google.firebase.analytics": {
+      "version": "file:E:/Project/Library/com.google.firebase.analytics-12.10.1.tgz",
+      "depth": 0,
+      "source": "local-tarball",
+      "dependencies": {
+        "com.google.firebase.app": "12.10.1"
+      }
+    },
+    "com.google.firebase.app": {
+      "version": "file:E:/Project/Library/com.google.firebase.app-12.10.1.tgz",
+      "depth": 0,
+      "source": "local-tarball",
+      "dependencies": {
+        "com.google.external-dependency-manager": "1.2.186"
+      }
+    },
+    "com.google.firebase.crashlytics": {
+      "version": "file:E:/Project/Library/com.google.firebase.crashlytics-12.10.1.tgz",
+      "depth": 0,
+      "source": "local-tarball",
+      "dependencies": {
+        "com.google.firebase.app": "12.10.1"
+      }
+    },
+    "com.google.firebase.remote-config": {
+      "version": "file:E:/Project/Library/com.google.firebase.remote-config-12.10.1.tgz",
+      "depth": 0,
+      "source": "local-tarball",
+      "dependencies": {
+        "com.google.firebase.app": "12.10.1"
+      }
+    },
+    "com.kem.ktool": {
+      "version": "https://github.com/KemLib/KTool.git?path=/Packages/KTool#develop",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "120bc2b49fe8d1b6f110afc7f5053792825c9cec"
+    },
     "com.unity.2d.animation": {
       "version": "10.1.4",
       "depth": 1,

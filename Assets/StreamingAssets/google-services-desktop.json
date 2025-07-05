@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "417937708100",
+    "firebase_url": "https://kplugin-firebase-default-rtdb.firebaseio.com",
+    "project_id": "kplugin-firebase",
+    "storage_bucket": "kplugin-firebase.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:417937708100:android:9dc2e70dba0b49abd19811",
+        "android_client_info": {
+          "package_name": "kem.kplugin.google.firebase"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDnFFjz2c_120KyW14cbsU5rD14AjsxOGY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
