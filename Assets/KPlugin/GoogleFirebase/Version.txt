@@ -1,0 +1,4 @@
+KPluginGoogleFirebase version 1.0.0
+KTool version 1.0.5
+GoogleFirebase version 12.10.1
+ExternalDependencyManager version 1.2.186
