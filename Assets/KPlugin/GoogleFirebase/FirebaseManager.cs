@@ -17,10 +17,10 @@ namespace KPlugin.GoogleFirebase
             private set;
         }
 
-        private bool initComplete;
+        private bool isInited;
         private FirebaseApp fbApp;
 
-        public bool InitComplete => initComplete;
+        public bool IsInited => isInited;
         public FirebaseApp FbApp => fbApp;
         public bool IsAvailable => fbApp != null;
         #endregion
@@ -64,7 +64,7 @@ namespace KPlugin.GoogleFirebase
             while (!task.IsCompleted)
                 yield return new WaitForEndOfFrame();
             //
-            if (task.Result == DependencyStatus.Available)
+            if (task.IsCompletedSuccessfully && task.Result == DependencyStatus.Available)
             {
                 fbApp = FirebaseApp.DefaultInstance;
             }
@@ -73,7 +73,7 @@ namespace KPlugin.GoogleFirebase
                 Debug.LogWarning(string.Format(ERROR_INIT_FAIL, task.Result.ToString()));
                 fbApp = null;
             }
-            initComplete = true;
+            isInited = true;
             initTrackingSource.CompleteSuccess();
         }
         #endregion

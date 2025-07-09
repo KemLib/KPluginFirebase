@@ -26,8 +26,6 @@ namespace KPlugin.GoogleFirebase.RemoteConfig
         [SerializeField]
         private bool initIndispensable;
         [SerializeField]
-        private bool isDebugData;
-        [SerializeField]
         private RemoteConfigAssets[] assets;
 
         private bool isAvailable,
@@ -89,33 +87,29 @@ namespace KPlugin.GoogleFirebase.RemoteConfig
         #endregion
 
         #region Method
-        private void DebugData()
+        public void DebugData()
         {
-            if (!isDebugData)
-                return;
-            //
             foreach (RemoteConfigAssets data in assets)
             {
-                string value;
+                string log;
                 switch (data.DataType)
                 {
                     case DataType.String:
-                        value = data.ValueString;
+                        log = string.Format(LOG_DATA_FORMAT, data.Key, data.DataType, data.ValueString);
                         break;
                     case DataType.Long:
-                        value = data.ValueLong.ToString();
+                        log = string.Format(LOG_DATA_FORMAT, data.Key, data.DataType, data.ValueLong);
                         break;
                     case DataType.Double:
-                        value = data.ValueDouble.ToString();
+                        log = string.Format(LOG_DATA_FORMAT, data.Key, data.DataType, data.ValueDouble);
                         break;
                     case DataType.Boolean:
-                        value = data.ValueBoolean.ToString();
+                        log = string.Format(LOG_DATA_FORMAT, data.Key, data.DataType, data.ValueBoolean);
                         break;
                     default:
-                        value = string.Empty;
+                        log = string.Empty;
                         break;
                 }
-                string log = string.Format(LOG_DATA_FORMAT, data.Key, data.DataType, value);
                 Debug.Log(log);
             }
         }
@@ -124,7 +118,7 @@ namespace KPlugin.GoogleFirebase.RemoteConfig
         #region Firebase
         private IEnumerator Firebase_Init(InitTrackingSource initTrackingSource)
         {
-            while (!FirebaseManager.Instance.InitComplete)
+            while (!FirebaseManager.Instance.IsInited)
                 yield return new WaitForEndOfFrame();
             //
             if (!FirebaseManager.Instance.IsAvailable)
@@ -135,22 +129,35 @@ namespace KPlugin.GoogleFirebase.RemoteConfig
             instanceFirebaseRemoteConfig = FirebaseRemoteConfig.DefaultInstance;
             //
             Dictionary<string, object> defaultData = Firebase_CreateDefaultData();
-            Task taskSetDefaultData = InstanceFirebaseRemoteConfig.SetDefaultsAsync(defaultData);
-            while (!taskSetDefaultData.IsCompleted)
-                yield return new WaitForEndOfFrame();
+            while (true)
+            {
+                Task taskSetDefaultData = InstanceFirebaseRemoteConfig.SetDefaultsAsync(defaultData);
+                while (!taskSetDefaultData.IsCompleted)
+                    yield return new WaitForEndOfFrame();
+                //
+                if (taskSetDefaultData.IsCompletedSuccessfully)
+                    break;
+                else
+                    yield return new WaitForSecondsRealtime(1);
+            }
             isAvailable = true;
             //
-            Task taskFetch = InstanceFirebaseRemoteConfig.FetchAsync(System.TimeSpan.Zero);
-            while (!taskFetch.IsCompleted)
-                yield return new WaitForEndOfFrame();
-            //
-            ConfigInfo info = InstanceFirebaseRemoteConfig.Info;
-            if (info.LastFetchStatus != LastFetchStatus.Success)
+            while(true)
             {
-                Debug.LogWarning(ERROR_FETCH_FAIL);
-                initTrackingSource.CompleteFail();
-                StartCoroutine(Firebase_FetchData());
-                yield break;
+                Task taskFetch = InstanceFirebaseRemoteConfig.FetchAsync(System.TimeSpan.Zero);
+                while (!taskFetch.IsCompleted)
+                    yield return new WaitForEndOfFrame();
+                //
+                if(taskFetch.IsCompletedSuccessfully && InstanceFirebaseRemoteConfig.Info.LastFetchStatus == LastFetchStatus.Success)
+                {
+                    break;
+                }
+                else
+                {
+                    Debug.LogWarning(ERROR_FETCH_FAIL);
+                    initTrackingSource.CompleteFail();
+                    yield return new WaitForSecondsRealtime(5);
+                }
             }
             //
             isFetch = true;
@@ -160,11 +167,10 @@ namespace KPlugin.GoogleFirebase.RemoteConfig
             while (!taskActivate.IsCompleted)
                 yield return new WaitForEndOfFrame();
             //
-            if (taskActivate.Result)
+            if (taskActivate.IsCompletedSuccessfully && taskActivate.Result)
             {
                 foreach (RemoteConfigAssets data in assets)
                     data.DataUpdate();
-                DebugData();
                 initTrackingSource?.CompleteSuccess();
                 OnLoadData?.Invoke();
                 isUpdateEnable.Value = true;
@@ -175,48 +181,6 @@ namespace KPlugin.GoogleFirebase.RemoteConfig
                 initTrackingSource?.CompleteFail();
                 isUpdateEnable.Value = true;
                 Firebase_OnConfigUpdate();
-            }
-        }
-        private IEnumerator Firebase_FetchData()
-        {
-            float delay = 5;
-            while (true)
-            {
-                yield return new WaitForSecondsRealtime(delay);
-                //
-                Task taskFetch = InstanceFirebaseRemoteConfig.FetchAsync(System.TimeSpan.Zero);
-                while (!taskFetch.IsCompleted)
-                    yield return new WaitForEndOfFrame();
-                //
-                ConfigInfo info = InstanceFirebaseRemoteConfig.Info;
-                if (info.LastFetchStatus == LastFetchStatus.Success)
-                {
-                    isFetch = true;
-                    InstanceFirebaseRemoteConfig.OnConfigUpdateListener += Firebase_OnConfigUpdateListener;
-                    //
-                    Task<bool> taskActivate = InstanceFirebaseRemoteConfig.ActivateAsync();
-                    while (!taskActivate.IsCompleted)
-                        yield return new WaitForEndOfFrame();
-                    //
-                    if (taskActivate.Result)
-                    {
-                        foreach (RemoteConfigAssets data in assets)
-                            data.DataUpdate();
-                        DebugData();
-                        OnLoadData?.Invoke();
-                        isUpdateEnable.Value = true;
-                    }
-                    else
-                    {
-                        Debug.LogWarning(ERROR_ACTIVATE_FAIL);
-                        isUpdateEnable.Value = true;
-                        Firebase_OnConfigUpdate();
-                    }
-                    //
-                    yield break;
-                }
-                //
-                Debug.LogWarning(ERROR_FETCH_FAIL);
             }
         }
         private Dictionary<string, object> Firebase_CreateDefaultData()
@@ -276,11 +240,10 @@ namespace KPlugin.GoogleFirebase.RemoteConfig
                 return;
             }
             //
-            if (taskActivate.Result)
+            if (taskActivate.IsCompletedSuccessfully && taskActivate.Result)
             {
                 foreach (RemoteConfigAssets data in assets)
                     data.DataUpdate();
-                DebugData();
                 OnLoadData?.Invoke();
                 //
                 isUpdating.Value = false;
@@ -301,6 +264,7 @@ namespace KPlugin.GoogleFirebase.RemoteConfig
                 isUpdating.Value = false;
                 yield break;
             }
+            //
             InstanceFirebaseRemoteConfig.ActivateAsync()
                 .ContinueWithOnMainThread(Firebase_OnConfigUpdateComplete);
         }

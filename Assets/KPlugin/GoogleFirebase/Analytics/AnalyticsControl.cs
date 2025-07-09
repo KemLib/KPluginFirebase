@@ -62,7 +62,7 @@ namespace KPlugin.GoogleFirebase.Analytics
         #region Firebase
         private IEnumerator Firebase_Init(InitTrackingSource initTrackingSource)
         {
-            while (!FirebaseManager.Instance.InitComplete)
+            while (!FirebaseManager.Instance.IsInited)
                 yield return new WaitForEndOfFrame();
             //
             if (FirebaseManager.Instance.IsAvailable)
@@ -182,6 +182,7 @@ namespace KPlugin.GoogleFirebase.Analytics
                         parameters[index] = new Parameter(key, (float)value);
                     else if (value is double)
                         parameters[index] = new Parameter(key, (double)value);
+                    index++;
                 }
                 FirebaseAnalytics.LogEvent(eventName, parameters);
             }
