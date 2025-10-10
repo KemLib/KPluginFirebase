@@ -38,15 +38,15 @@ namespace KPlugin.GoogleFirebase
         #endregion
 
         #region Init
-        public InitTracking InitBegin()
+        public IInitTracking InitBegin()
         {
             if (Instance != null)
-                return InitTracking.Success;
+                return IInitTracking.Success;
             //
             Instance = this;
             DontDestroyOnLoad(gameObject);
             //
-            InitTrackingSource initTrackingSource = new InitTrackingSource(true);
+            InitTrackingSource initTrackingSource = new InitTrackingSource(true, true);
             StartCoroutine(Firebase_IE_Init(initTrackingSource));
             return initTrackingSource;
         }

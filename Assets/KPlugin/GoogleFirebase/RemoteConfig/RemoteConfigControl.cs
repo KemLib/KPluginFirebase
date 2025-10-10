@@ -65,10 +65,10 @@ namespace KPlugin.GoogleFirebase.RemoteConfig
         #endregion
 
         #region Init
-        public InitTracking InitBegin()
+        public IInitTracking InitBegin()
         {
             if (Instance != null)
-                return InitTracking.Success;
+                return IInitTracking.Success;
             //
             Instance = this;
             isAvailable = false;
@@ -76,7 +76,7 @@ namespace KPlugin.GoogleFirebase.RemoteConfig
             isUpdateEnable = new InterValueBool();
             isUpdating = new InterValueBool();
             //
-            InitTrackingSource initTrackingSource = new InitTrackingSource(initIndispensable);
+            InitTrackingSource initTrackingSource = new InitTrackingSource(initIndispensable, true);
             StartCoroutine(Firebase_Init(initTrackingSource));
             return initTrackingSource;
         }
