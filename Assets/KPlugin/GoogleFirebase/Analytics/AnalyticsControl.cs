@@ -49,7 +49,7 @@ namespace KPlugin.GoogleFirebase.Analytics
             Instance = this;
             isAvailable = false;
             //
-            InitTrackingSource initTrackingSource = new InitTrackingSource(initIndispensable, true);
+            InitTrackingSource initTrackingSource = new InitTrackingSource(initIndispensable);
             StartCoroutine(Firebase_Init(initTrackingSource));
             return initTrackingSource;
         }

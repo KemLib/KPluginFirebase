@@ -76,7 +76,7 @@ namespace KPlugin.GoogleFirebase.RemoteConfig
             isUpdateEnable = new InterValueBool();
             isUpdating = new InterValueBool();
             //
-            InitTrackingSource initTrackingSource = new InitTrackingSource(initIndispensable, true);
+            InitTrackingSource initTrackingSource = new InitTrackingSource(initIndispensable);
             StartCoroutine(Firebase_Init(initTrackingSource));
             return initTrackingSource;
         }
@@ -87,32 +87,7 @@ namespace KPlugin.GoogleFirebase.RemoteConfig
         #endregion
 
         #region Method
-        public void DebugData()
-        {
-            foreach (RemoteConfigAssets data in assets)
-            {
-                string log;
-                switch (data.DataType)
-                {
-                    case DataType.String:
-                        log = string.Format(LOG_DATA_FORMAT, data.Key, data.DataType, data.ValueString);
-                        break;
-                    case DataType.Long:
-                        log = string.Format(LOG_DATA_FORMAT, data.Key, data.DataType, data.ValueLong);
-                        break;
-                    case DataType.Double:
-                        log = string.Format(LOG_DATA_FORMAT, data.Key, data.DataType, data.ValueDouble);
-                        break;
-                    case DataType.Boolean:
-                        log = string.Format(LOG_DATA_FORMAT, data.Key, data.DataType, data.ValueBoolean);
-                        break;
-                    default:
-                        log = string.Empty;
-                        break;
-                }
-                Debug.Log(log);
-            }
-        }
+
         #endregion
 
         #region Firebase

@@ -46,7 +46,7 @@ namespace KPlugin.GoogleFirebase
             Instance = this;
             DontDestroyOnLoad(gameObject);
             //
-            InitTrackingSource initTrackingSource = new InitTrackingSource(true, true);
+            InitTrackingSource initTrackingSource = new InitTrackingSource(true);
             StartCoroutine(Firebase_IE_Init(initTrackingSource));
             return initTrackingSource;
         }
