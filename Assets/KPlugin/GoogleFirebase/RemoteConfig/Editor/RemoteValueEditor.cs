@@ -3,23 +3,25 @@ using UnityEngine;
 
 namespace KPlugin.GoogleFirebase.RemoteConfig.Editor
 {
-    [CustomEditor(typeof(RemoteConfigAssets))]
-    public class DataConfigDrawer : UnityEditor.Editor
+    [CustomEditor(typeof(RemoteValue))]
+    public class RemoteValueEditor : UnityEditor.Editor
     {
         #region Properties
-        private SerializedProperty propertyKey,
+        private SerializedProperty propertyIsHide,
+            propertyKey,
             propertyDataType,
             propertyDefaultValueString,
             propertyDefaultValueLong,
             propertyDefaultValueDouble,
             propertyDefaultValueBoolean;
-        private RemoteConfigAssets asset;
+        private RemoteValue asset;
         #endregion Properties
 
         #region Unity Event
         private void OnEnable()
         {
-            asset = serializedObject.targetObject as RemoteConfigAssets;
+            asset = serializedObject.targetObject as RemoteValue;
+            propertyIsHide = serializedObject.FindProperty("isHide");
             propertyKey = serializedObject.FindProperty("key");
             propertyDataType = serializedObject.FindProperty("dataType");
             propertyDefaultValueString = serializedObject.FindProperty("defaultValueString");
@@ -31,6 +33,7 @@ namespace KPlugin.GoogleFirebase.RemoteConfig.Editor
         {
             serializedObject.Update();
             //
+            EditorGUILayout.PropertyField(propertyIsHide, new GUIContent("IsHide"));
             EditorGUILayout.PropertyField(propertyKey, new GUIContent("Key"));
             EditorGUILayout.PropertyField(propertyDataType, new GUIContent("Data Type"));
             DataType dataType = (DataType)propertyDataType.enumValueIndex;

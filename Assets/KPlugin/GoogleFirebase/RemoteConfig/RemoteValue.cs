@@ -3,10 +3,12 @@ using UnityEngine;
 
 namespace KPlugin.GoogleFirebase.RemoteConfig
 {
-    [CreateAssetMenu(fileName = "RemoteConfigAssets", menuName = "KPlugin/Firebase/Create RemoteConfigAssets")]
-    public class RemoteConfigAssets : ScriptableObject
+    [CreateAssetMenu(fileName = "RemoteValue", menuName = "KPlugin/Firebase/RemoteValue")]
+    public class RemoteValue : ScriptableObject
     {
         #region Properties
+        [SerializeField]
+        private bool isHide;
         [SerializeField]
         private string key;
         [SerializeField]
@@ -25,6 +27,7 @@ namespace KPlugin.GoogleFirebase.RemoteConfig
         private double valueDouble;
         private bool valueBoolean;
 
+        public bool IsHide => isHide || string.IsNullOrEmpty(key);
         public string Key => key;
         public DataType DataType => dataType;
         public string ValueString => valueString;
@@ -38,6 +41,9 @@ namespace KPlugin.GoogleFirebase.RemoteConfig
         #region Method
         public void DataInit()
         {
+            if (isHide)
+                return;
+            //
             valueString = defaultValueString;
             valueLong = defaultValueLong;
             valueDouble = defaultValueDouble;
@@ -45,6 +51,9 @@ namespace KPlugin.GoogleFirebase.RemoteConfig
         }
         public void DataUpdate(FirebaseRemoteConfig instance)
         {
+            if (isHide)
+                return;
+            //
             if (instance == null)
                 return;
             //

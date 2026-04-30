@@ -25,7 +25,7 @@ namespace KPlugin.GoogleFirebase.RemoteConfig
         [SerializeField]
         private bool initIndispensable;
         [SerializeField]
-        private RemoteConfigAssets[] assets;
+        private RemoteValue[] arrayRemoteValue;
 
         private bool isAvailable,
             isUpdateListener;
@@ -33,15 +33,17 @@ namespace KPlugin.GoogleFirebase.RemoteConfig
         public event UnityAction OnDataUpdate;
 
         public bool IsAvailable => isAvailable;
-        public int Count => assets.Length;
-        public RemoteConfigAssets this[int index] => assets[index];
-        public RemoteConfigAssets this[string key]
+        public int Count => arrayRemoteValue.Length;
+        public RemoteValue this[int index] => arrayRemoteValue[index];
+        public RemoteValue this[string key]
         {
             get
             {
-                foreach (RemoteConfigAssets data in assets)
-                    if (data.Key == key)
-                        return data;
+                if (string.IsNullOrEmpty(key))
+                    return null;
+                foreach (var item in arrayRemoteValue)
+                    if (item.Key == key)
+                        return item;
                 return null;
             }
         }
@@ -185,18 +187,21 @@ namespace KPlugin.GoogleFirebase.RemoteConfig
         #region RemoteConfigAsset
         private void RemoteConfigAsset_Init()
         {
-            foreach (var item in assets)
+            foreach (var item in arrayRemoteValue)
                 item.DataInit();
         }
         private void RemoteConfigAsset_Update()
         {
-            foreach (RemoteConfigAssets data in assets)
-                data.DataUpdate(InstanceFirebaseRemoteConfig);
+            foreach (var item in arrayRemoteValue)
+                item.DataUpdate(InstanceFirebaseRemoteConfig);
         }
         private void RemoteConfigAsset_DebugData()
         {
-            foreach (var item in assets)
+            foreach (var item in arrayRemoteValue)
             {
+                if (item.IsHide)
+                    continue;
+                //
                 string value;
                 switch (item.DataType)
                 {
@@ -223,23 +228,24 @@ namespace KPlugin.GoogleFirebase.RemoteConfig
         private Dictionary<string, object> RemoteConfigAsset_CreateDefaultData()
         {
             Dictionary<string, object> defaultData = new Dictionary<string, object>();
-            foreach (var data in assets)
+            foreach (var item in arrayRemoteValue)
             {
-                if (string.IsNullOrEmpty(data.Key))
+                if (item.IsHide)
                     continue;
-                switch (data.DataType)
+                //
+                switch (item.DataType)
                 {
                     case DataType.String:
-                        defaultData.Add(data.Key, data.ValueString);
+                        defaultData.Add(item.Key, item.ValueString);
                         break;
                     case DataType.Long:
-                        defaultData.Add(data.Key, data.ValueLong);
+                        defaultData.Add(item.Key, item.ValueLong);
                         break;
                     case DataType.Double:
-                        defaultData.Add(data.Key, data.ValueDouble);
+                        defaultData.Add(item.Key, item.ValueDouble);
                         break;
                     case DataType.Boolean:
-                        defaultData.Add(data.Key, data.ValueBoolean);
+                        defaultData.Add(item.Key, item.ValueBoolean);
                         break;
                 }
             }

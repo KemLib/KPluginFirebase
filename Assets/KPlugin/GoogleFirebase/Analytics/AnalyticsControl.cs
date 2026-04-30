@@ -4,6 +4,7 @@ using KTool.Init;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace KPlugin.GoogleFirebase.Analytics
 {
@@ -19,6 +20,8 @@ namespace KPlugin.GoogleFirebase.Analytics
 
         [SerializeField]
         private bool initIndispensable;
+        [SerializeField]
+        private UnityEvent onInited;
 
         private bool isAvailable;
 
@@ -63,6 +66,7 @@ namespace KPlugin.GoogleFirebase.Analytics
         private void AnalyticsInit(InitTrackingSource initTrackingSource)
         {
             isAvailable = true;
+            onInited?.Invoke();
             //
             initTrackingSource.CompleteSuccess();
         }

@@ -229,6 +229,35 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   initIndispensable: 0
+  onInited:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 11400000, guid: aae5775d72fd2ad4cb27f953760301b2, type: 2}
+        m_TargetAssemblyTypeName: KPlugin.GoogleFirebase.Analytics.AnalyticsDaysPlaying,
+          Assembly-CSharp
+        m_MethodName: Init
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+      - m_Target: {fileID: 11400000, guid: 699c801e8c7ec4346af85284a1f25461, type: 2}
+        m_TargetAssemblyTypeName: KPlugin.GoogleFirebase.Analytics.AnalyticsNumbersPlaying,
+          Assembly-CSharp
+        m_MethodName: Init
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!1 &610600708
 GameObject:
   m_ObjectHideFlags: 0
@@ -274,7 +303,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   initIndispensable: 0
-  assets:
+  arrayRemoteValue:
   - {fileID: 11400000, guid: 820ebe09eedd85048a0a3f3f90878cf1, type: 2}
   - {fileID: 11400000, guid: 4c362b01732faa045a0968413c2e6d7f, type: 2}
   - {fileID: 11400000, guid: 6013dbdf207b910418c5ee386a42b17e, type: 2}
@@ -401,6 +430,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 02298705670303d47bd5d72935c3c2b2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  initIndispensable: 0
 --- !u!4 &1304384307
 Transform:
   m_ObjectHideFlags: 0
