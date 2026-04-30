@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   key: data_source
   dataType: 0
-  valueString: data from client
-  valueLong: 0
-  valueDouble: 0
-  valueBoolean: 0
+  defaultValueString: data_from_client
+  defaultValueLong: 0
+  defaultValueDouble: 0
+  defaultValueBoolean: 0

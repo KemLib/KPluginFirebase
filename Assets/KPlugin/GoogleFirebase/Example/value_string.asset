@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   key: value_string
   dataType: 0
-  valueString: abcdef
-  valueLong: 0
-  valueDouble: 0
-  valueBoolean: 0
+  defaultValueString: ABCDEF
+  defaultValueLong: 0
+  defaultValueDouble: 0
+  defaultValueBoolean: 0

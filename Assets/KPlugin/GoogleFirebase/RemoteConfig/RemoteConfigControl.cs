@@ -1,8 +1,7 @@
 using Firebase.Extensions;
 using Firebase.RemoteConfig;
-using KLibStandard.Concurrent;
+using KTool.Cron;
 using KTool.Init;
-using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -13,10 +12,10 @@ namespace KPlugin.GoogleFirebase.RemoteConfig
     public class RemoteConfigControl : MonoBehaviour, IIniter
     {
         #region Properties
-        private const string ERROR_FETCH_FAIL = "Firebase RemoteConfig fetch faiil",
-            ERROR_ACTIVATE_FAIL = "Firebase RemoteConfig activate faill",
-            ERROR_ACTIVATE_UPDATE_FAIL = "Firebase RemoteConfig activate update faill";
-        private const string LOG_DATA_FORMAT = "Firebase RemoteConfig Key[{0}] - Type[{1}] - Value: {2}";
+        private const string DEBUG_DATA_FORMAT = "Firebase RemoveConfig Key[{0}] - Type[{1}] - Value: {2}";
+        private const string ERROR_SET_DEFAULT_FAIL = "Firebase RemoteConfig set default fail",
+            ERROR_FETCH_FAIL = "Firebase RemoteConfig fetch fail";
+
         public static RemoteConfigControl Instance
         {
             get;
@@ -29,11 +28,9 @@ namespace KPlugin.GoogleFirebase.RemoteConfig
         private RemoteConfigAssets[] assets;
 
         private bool isAvailable,
-            isFetch;
-        private InterValueBool isUpdateEnable,
-            isUpdating;
+            isUpdateListener;
         private FirebaseRemoteConfig instanceFirebaseRemoteConfig;
-        public event UnityAction OnLoadData;
+        public event UnityAction OnDataUpdate;
 
         public bool IsAvailable => isAvailable;
         public int Count => assets.Length;
@@ -54,12 +51,14 @@ namespace KPlugin.GoogleFirebase.RemoteConfig
         #region Unity Event
         private void OnDestroy()
         {
-            isUpdateEnable.Value = false;
             if (Instance != null && Instance.GetInstanceID() == GetInstanceID())
             {
                 Instance = null;
-                if (isFetch)
+                if (isUpdateListener)
+                {
+                    isUpdateListener = false;
                     InstanceFirebaseRemoteConfig.OnConfigUpdateListener -= Firebase_OnConfigUpdateListener;
+                }
             }
         }
         #endregion
@@ -72,12 +71,13 @@ namespace KPlugin.GoogleFirebase.RemoteConfig
             //
             Instance = this;
             isAvailable = false;
-            isFetch = false;
-            isUpdateEnable = new InterValueBool();
-            isUpdating = new InterValueBool();
+            isUpdateListener = false;
             //
             InitTrackingSource initTrackingSource = new InitTrackingSource(initIndispensable);
-            StartCoroutine(Firebase_Init(initTrackingSource));
+            CronObject.Create()
+                .Add(ConditionFunc.Create(FirebaseManager.IsReady))
+                .Add(CallbackAction.Create(RemoteConfig_Init, initTrackingSource))
+                .Run();
             return initTrackingSource;
         }
         public void InitEnd()
@@ -86,79 +86,141 @@ namespace KPlugin.GoogleFirebase.RemoteConfig
         }
         #endregion
 
-        #region Method
-
-        #endregion
-
         #region Firebase
-        private IEnumerator Firebase_Init(InitTrackingSource initTrackingSource)
+        private void RemoteConfig_Init(InitTrackingSource initTrackingSource)
         {
-            while (!FirebaseManager.Instance.IsInited)
-                yield return new WaitForEndOfFrame();
-            //
-            if (!FirebaseManager.Instance.IsAvailable)
-            {
-                initTrackingSource.CompleteFail();
-                yield break;
-            }
             instanceFirebaseRemoteConfig = FirebaseRemoteConfig.DefaultInstance;
             //
-            Dictionary<string, object> defaultData = Firebase_CreateDefaultData();
-            while (true)
+            RemoteConfigAsset_Init();
+            Dictionary<string, object> defaultData = RemoteConfigAsset_CreateDefaultData();
+            SetDefaults_Begin(initTrackingSource, defaultData);
+        }
+        private void SetDefaults_Begin(InitTrackingSource initTrackingSource, Dictionary<string, object> defaultData)
+        {
+            Task taskSetDefaultData = InstanceFirebaseRemoteConfig.SetDefaultsAsync(defaultData);
+            CronObject.Create()
+                .Add(ConditionTask.Create(taskSetDefaultData))
+                .Add(CallbackAction.Create(SetDefaults_Oncomplete, taskSetDefaultData, initTrackingSource, defaultData))
+                .Run();
+        }
+        private void SetDefaults_Oncomplete(Task taskSetDefaultData, InitTrackingSource initTrackingSource, Dictionary<string, object> defaultData)
+        {
+            if (taskSetDefaultData.IsCompletedSuccessfully)
             {
-                Task taskSetDefaultData = InstanceFirebaseRemoteConfig.SetDefaultsAsync(defaultData);
-                while (!taskSetDefaultData.IsCompleted)
-                    yield return new WaitForEndOfFrame();
-                //
-                if (taskSetDefaultData.IsCompletedSuccessfully)
-                    break;
-                else
-                    yield return new WaitForSecondsRealtime(1);
-            }
-            isAvailable = true;
-            //
-            while(true)
-            {
-                Task taskFetch = InstanceFirebaseRemoteConfig.FetchAsync(System.TimeSpan.Zero);
-                while (!taskFetch.IsCompleted)
-                    yield return new WaitForEndOfFrame();
-                //
-                if(taskFetch.IsCompletedSuccessfully && InstanceFirebaseRemoteConfig.Info.LastFetchStatus == LastFetchStatus.Success)
-                {
-                    break;
-                }
-                else
-                {
-                    Debug.LogWarning(ERROR_FETCH_FAIL);
-                    initTrackingSource.CompleteFail();
-                    yield return new WaitForSecondsRealtime(5);
-                }
-            }
-            //
-            isFetch = true;
-            InstanceFirebaseRemoteConfig.OnConfigUpdateListener += Firebase_OnConfigUpdateListener;
-            //
-            Task<bool> taskActivate = InstanceFirebaseRemoteConfig.ActivateAsync();
-            while (!taskActivate.IsCompleted)
-                yield return new WaitForEndOfFrame();
-            //
-            if (taskActivate.IsCompletedSuccessfully && taskActivate.Result)
-            {
-                foreach (RemoteConfigAssets data in assets)
-                    data.DataUpdate();
-                initTrackingSource?.CompleteSuccess();
-                OnLoadData?.Invoke();
-                isUpdateEnable.Value = true;
+                Fetch_Begin(initTrackingSource);
             }
             else
             {
-                Debug.LogWarning(ERROR_ACTIVATE_FAIL);
-                initTrackingSource?.CompleteFail();
-                isUpdateEnable.Value = true;
-                Firebase_OnConfigUpdate();
+                Debug.LogWarning(ERROR_SET_DEFAULT_FAIL);
+                //
+                CronObject.Create()
+                    .Add(ConditionFrame.Create(1))
+                    .Add(CallbackAction.Create(SetDefaults_Begin, initTrackingSource, defaultData))
+                    .Run();
             }
         }
-        private Dictionary<string, object> Firebase_CreateDefaultData()
+        private void Fetch_Begin(InitTrackingSource initTrackingSource)
+        {
+            Task taskFetch = InstanceFirebaseRemoteConfig.FetchAsync(System.TimeSpan.Zero);
+            CronObject.Create()
+                .Add(ConditionTask.Create(taskFetch))
+                .Add(CallbackAction.Create(Fetch_OnComplete, taskFetch, initTrackingSource))
+                .Run();
+        }
+        private void Fetch_OnComplete(Task taskFetch, InitTrackingSource initTrackingSource)
+        {
+            if (taskFetch.IsCompletedSuccessfully && InstanceFirebaseRemoteConfig.Info.LastFetchStatus == LastFetchStatus.Success)
+            {
+                Activate_Begin(initTrackingSource);
+            }
+            else
+            {
+                Debug.LogWarning(ERROR_FETCH_FAIL);
+                //
+                CronObject.Create()
+                    .Add(ConditionFrame.Create(1))
+                    .Add(CallbackAction.Create(Fetch_Begin, initTrackingSource))
+                    .Run();
+            }
+        }
+        private void Activate_Begin(InitTrackingSource initTrackingSource)
+        {
+            Task<bool> taskActivate = InstanceFirebaseRemoteConfig.ActivateAsync();
+            CronObject.Create()
+                .Add(ConditionTask.Create(taskActivate))
+                .Add(CallbackAction.Create(Activate_OnComplete, initTrackingSource))
+                .Run();
+        }
+        private void Activate_OnComplete(InitTrackingSource initTrackingSource)
+        {
+            isAvailable = true;
+            RemoteConfigAsset_Update();
+            OnDataUpdate?.Invoke();
+            RemoteConfigAsset_DebugData();
+            //
+            isUpdateListener = true;
+            InstanceFirebaseRemoteConfig.OnConfigUpdateListener += Firebase_OnConfigUpdateListener;
+            //
+            initTrackingSource?.CompleteSuccess();
+        }
+        #endregion
+
+        #region Firebase UpdateConfig
+        private void Firebase_OnConfigUpdateListener(object sender, ConfigUpdateEventArgs args)
+        {
+            if (args.Error == RemoteConfigError.None)
+                return;
+            //
+            InstanceFirebaseRemoteConfig.ActivateAsync()
+                .ContinueWithOnMainThread(Firebase_OnConfigUpdateComplete);
+        }
+        private void Firebase_OnConfigUpdateComplete(Task<bool> taskActivate)
+        {
+            RemoteConfigAsset_Update();
+            OnDataUpdate?.Invoke();
+            RemoteConfigAsset_DebugData();
+        }
+        #endregion
+
+        #region RemoteConfigAsset
+        private void RemoteConfigAsset_Init()
+        {
+            foreach (var item in assets)
+                item.DataInit();
+        }
+        private void RemoteConfigAsset_Update()
+        {
+            foreach (RemoteConfigAssets data in assets)
+                data.DataUpdate(InstanceFirebaseRemoteConfig);
+        }
+        private void RemoteConfigAsset_DebugData()
+        {
+            foreach (var item in assets)
+            {
+                string value;
+                switch (item.DataType)
+                {
+                    case DataType.String:
+                        value = item.ValueString;
+                        break;
+                    case DataType.Long:
+                        value = item.ValueLong.ToString();
+                        break;
+                    case DataType.Double:
+                        value = item.ValueDouble.ToString();
+                        break;
+                    case DataType.Boolean:
+                        value = item.ValueBoolean.ToString();
+                        break;
+                    default:
+                        value = string.Empty;
+                        break;
+                }
+                string log = string.Format(DEBUG_DATA_FORMAT, item.Key, item.DataType, value);
+                Debug.Log(log);
+            }
+        }
+        private Dictionary<string, object> RemoteConfigAsset_CreateDefaultData()
         {
             Dictionary<string, object> defaultData = new Dictionary<string, object>();
             foreach (var data in assets)
@@ -183,65 +245,6 @@ namespace KPlugin.GoogleFirebase.RemoteConfig
             }
             //
             return defaultData;
-        }
-        #endregion
-
-        #region Firebase UpdateConfig
-        private void Firebase_OnConfigUpdate()
-        {
-            if (!isUpdateEnable)
-                return;
-            if (!isUpdating.TryExchange(true))
-                return;
-            //
-            InstanceFirebaseRemoteConfig.ActivateAsync()
-                .ContinueWithOnMainThread(Firebase_OnConfigUpdateComplete);
-        }
-        private void Firebase_OnConfigUpdateListener(object sender, ConfigUpdateEventArgs args)
-        {
-            if (args.Error == RemoteConfigError.None || !isUpdateEnable)
-                return;
-            if (!isUpdating.TryExchange(true))
-                return;
-            //
-            InstanceFirebaseRemoteConfig.ActivateAsync()
-                .ContinueWithOnMainThread(Firebase_OnConfigUpdateComplete);
-        }
-        private void Firebase_OnConfigUpdateComplete(Task<bool> taskActivate)
-        {
-            if (!isUpdateEnable)
-            {
-                isUpdating.Value = false;
-                return;
-            }
-            //
-            if (taskActivate.IsCompletedSuccessfully && taskActivate.Result)
-            {
-                foreach (RemoteConfigAssets data in assets)
-                    data.DataUpdate();
-                OnLoadData?.Invoke();
-                //
-                isUpdating.Value = false;
-            }
-            else
-            {
-                Debug.LogWarning(ERROR_ACTIVATE_UPDATE_FAIL);
-                StartCoroutine(Firebase_ConfigUpdate(5));
-            }
-        }
-        private IEnumerator Firebase_ConfigUpdate(int delay)
-        {
-            if (delay > 0)
-                yield return new WaitForSecondsRealtime(delay);
-            //
-            if (!isUpdateEnable)
-            {
-                isUpdating.Value = false;
-                yield break;
-            }
-            //
-            InstanceFirebaseRemoteConfig.ActivateAsync()
-                .ContinueWithOnMainThread(Firebase_OnConfigUpdateComplete);
         }
         #endregion
     }

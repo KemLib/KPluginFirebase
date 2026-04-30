@@ -9,21 +9,23 @@ namespace KPlugin.GoogleFirebase.RemoteConfig.Editor
         #region Properties
         private SerializedProperty propertyKey,
             propertyDataType,
-            propertyValueString,
-            propertyValueLong,
-            propertyValueDouble,
-            propertyValueBoolean;
+            propertyDefaultValueString,
+            propertyDefaultValueLong,
+            propertyDefaultValueDouble,
+            propertyDefaultValueBoolean;
+        private RemoteConfigAssets asset;
         #endregion Properties
 
         #region Unity Event
         private void OnEnable()
         {
+            asset = serializedObject.targetObject as RemoteConfigAssets;
             propertyKey = serializedObject.FindProperty("key");
             propertyDataType = serializedObject.FindProperty("dataType");
-            propertyValueString = serializedObject.FindProperty("valueString");
-            propertyValueLong = serializedObject.FindProperty("valueLong");
-            propertyValueDouble = serializedObject.FindProperty("valueDouble");
-            propertyValueBoolean = serializedObject.FindProperty("valueBoolean");
+            propertyDefaultValueString = serializedObject.FindProperty("defaultValueString");
+            propertyDefaultValueLong = serializedObject.FindProperty("defaultValueLong");
+            propertyDefaultValueDouble = serializedObject.FindProperty("defaultValueDouble");
+            propertyDefaultValueBoolean = serializedObject.FindProperty("defaultValueBoolean");
         }
         public override void OnInspectorGUI()
         {
@@ -35,18 +37,36 @@ namespace KPlugin.GoogleFirebase.RemoteConfig.Editor
             switch (dataType)
             {
                 case DataType.String:
-                    EditorGUILayout.PropertyField(propertyValueString, new GUIContent("Value String"));
+                    EditorGUILayout.PropertyField(propertyDefaultValueString, new GUIContent("Default Value String"));
                     break;
                 case DataType.Long:
-                    EditorGUILayout.PropertyField(propertyValueLong, new GUIContent("Value Long"));
+                    EditorGUILayout.PropertyField(propertyDefaultValueLong, new GUIContent("Default Value Long"));
                     break;
                 case DataType.Double:
-                    EditorGUILayout.PropertyField(propertyValueDouble, new GUIContent("Value Double"));
+                    EditorGUILayout.PropertyField(propertyDefaultValueDouble, new GUIContent("Default Value Double"));
                     break;
                 case DataType.Boolean:
-                    EditorGUILayout.PropertyField(propertyValueBoolean, new GUIContent("Value Boolean"));
+                    EditorGUILayout.PropertyField(propertyDefaultValueBoolean, new GUIContent("Default Value Boolean"));
                     break;
             }
+            //
+            EditorGUI.BeginDisabledGroup(true);
+            switch (dataType)
+            {
+                case DataType.String:
+                    EditorGUILayout.TextField(new GUIContent("Value String"), asset.ValueString);
+                    break;
+                case DataType.Long:
+                    EditorGUILayout.LongField(new GUIContent("Value Long"), asset.ValueLong);
+                    break;
+                case DataType.Double:
+                    EditorGUILayout.DoubleField(new GUIContent("Value Double"), asset.ValueDouble);
+                    break;
+                case DataType.Boolean:
+                    EditorGUILayout.Toggle(new GUIContent("Value Boolean"), asset.ValueBoolean);
+                    break;
+            }
+            EditorGUI.EndDisabledGroup();
             //
             serializedObject.ApplyModifiedProperties();
         }

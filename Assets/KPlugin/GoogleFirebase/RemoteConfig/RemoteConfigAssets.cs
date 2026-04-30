@@ -12,12 +12,17 @@ namespace KPlugin.GoogleFirebase.RemoteConfig
         [SerializeField]
         private DataType dataType;
         [SerializeField]
+        private string defaultValueString;
+        [SerializeField]
+        private long defaultValueLong;
+        [SerializeField]
+        private double defaultValueDouble;
+        [SerializeField]
+        private bool defaultValueBoolean;
+
         private string valueString;
-        [SerializeField]
         private long valueLong;
-        [SerializeField]
         private double valueDouble;
-        [SerializeField]
         private bool valueBoolean;
 
         public string Key => key;
@@ -31,12 +36,18 @@ namespace KPlugin.GoogleFirebase.RemoteConfig
         #endregion
 
         #region Method
-        public void DataUpdate()
+        public void DataInit()
         {
-            RemoteConfigControl firebaseInstance = RemoteConfigControl.Instance;
-            if (firebaseInstance == null || !firebaseInstance.IsAvailable)
+            valueString = defaultValueString;
+            valueLong = defaultValueLong;
+            valueDouble = defaultValueDouble;
+            valueBoolean = defaultValueBoolean;
+        }
+        public void DataUpdate(FirebaseRemoteConfig instance)
+        {
+            if (instance == null)
                 return;
-            FirebaseRemoteConfig instance = firebaseInstance.InstanceFirebaseRemoteConfig;
+            //
             switch (dataType)
             {
                 case DataType.String:

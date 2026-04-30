@@ -1,6 +1,6 @@
 using Firebase;
+using KTool.Cron;
 using KTool.Init;
-using System.Collections;
 using System.Threading.Tasks;
 using UnityEngine;
 
@@ -17,12 +17,13 @@ namespace KPlugin.GoogleFirebase
             private set;
         }
 
-        private bool isInited;
+        [SerializeField]
+        private bool initIndispensable;
+
         private FirebaseApp fbApp;
 
-        public bool IsInited => isInited;
+        public bool IsAvailable => FbApp != null;
         public FirebaseApp FbApp => fbApp;
-        public bool IsAvailable => fbApp != null;
         #endregion
 
         #region Unity Event
@@ -46,8 +47,12 @@ namespace KPlugin.GoogleFirebase
             Instance = this;
             DontDestroyOnLoad(gameObject);
             //
-            InitTrackingSource initTrackingSource = new InitTrackingSource(true);
-            StartCoroutine(Firebase_IE_Init(initTrackingSource));
+            InitTrackingSource initTrackingSource = new InitTrackingSource(initIndispensable);
+            Task<DependencyStatus> task = FirebaseApp.CheckAndFixDependenciesAsync();
+            CronObject.Create()
+                .Add(ConditionTask.Create(task))
+                .Add(CallbackAction.Create(FirebaseInit_OnComplete, task, initTrackingSource))
+                .Run();
             return initTrackingSource;
         }
 
@@ -58,12 +63,12 @@ namespace KPlugin.GoogleFirebase
         #endregion
 
         #region Firebase
-        private IEnumerator Firebase_IE_Init(InitTrackingSource initTrackingSource)
+        public static bool IsReady()
         {
-            Task<DependencyStatus> task = FirebaseApp.CheckAndFixDependenciesAsync();
-            while (!task.IsCompleted)
-                yield return new WaitForEndOfFrame();
-            //
+            return Instance != null && Instance.IsAvailable;
+        }
+        private void FirebaseInit_OnComplete(Task<DependencyStatus> task, InitTrackingSource initTrackingSource)
+        {
             if (task.IsCompletedSuccessfully && task.Result == DependencyStatus.Available)
             {
                 fbApp = FirebaseApp.DefaultInstance;
@@ -73,7 +78,7 @@ namespace KPlugin.GoogleFirebase
                 Debug.LogWarning(string.Format(ERROR_INIT_FAIL, task.Result.ToString()));
                 fbApp = null;
             }
-            isInited = true;
+            //
             initTrackingSource.CompleteSuccess();
         }
         #endregion

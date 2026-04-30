@@ -1,7 +1,7 @@
 using Firebase.Analytics;
+using KTool.Cron;
 using KTool.Init;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -19,9 +19,6 @@ namespace KPlugin.GoogleFirebase.Analytics
 
         [SerializeField]
         private bool initIndispensable;
-        [SerializeField]
-        private string userName,
-            propertyName;
 
         private bool isAvailable;
 
@@ -50,7 +47,10 @@ namespace KPlugin.GoogleFirebase.Analytics
             isAvailable = false;
             //
             InitTrackingSource initTrackingSource = new InitTrackingSource(initIndispensable);
-            StartCoroutine(Firebase_Init(initTrackingSource));
+            CronObject.Create()
+                .Add(ConditionFunc.Create(FirebaseManager.IsReady))
+                .Add(CallbackAction.Create(AnalyticsInit, initTrackingSource))
+                .Run();
             return initTrackingSource;
         }
         public void InitEnd()
@@ -59,18 +59,11 @@ namespace KPlugin.GoogleFirebase.Analytics
         }
         #endregion
 
-        #region Firebase
-        private IEnumerator Firebase_Init(InitTrackingSource initTrackingSource)
+        #region Analytics
+        private void AnalyticsInit(InitTrackingSource initTrackingSource)
         {
-            while (!FirebaseManager.Instance.IsInited)
-                yield return new WaitForEndOfFrame();
+            isAvailable = true;
             //
-            if (FirebaseManager.Instance.IsAvailable)
-            {
-                isAvailable = true;
-                if (!string.IsNullOrEmpty(userName) && !string.IsNullOrEmpty(propertyName))
-                    FirebaseAnalytics.SetUserProperty(userName, propertyName);
-            }
             initTrackingSource.CompleteSuccess();
         }
         #endregion
@@ -164,6 +157,8 @@ namespace KPlugin.GoogleFirebase.Analytics
         {
             if (Instance == null || !Instance.IsAvailable)
                 return;
+            if (dic == null)
+                return;
             //
             try
             {
@@ -172,16 +167,16 @@ namespace KPlugin.GoogleFirebase.Analytics
                 foreach (var key in dic.Keys)
                 {
                     object value = dic[key];
-                    if (value is string)
-                        parameters[index] = new Parameter(key, (string)value);
-                    else if (value is int)
-                        parameters[index] = new Parameter(key, (int)value);
-                    else if (value is long)
-                        parameters[index] = new Parameter(key, (long)value);
-                    else if (value is float)
-                        parameters[index] = new Parameter(key, (float)value);
-                    else if (value is double)
-                        parameters[index] = new Parameter(key, (double)value);
+                    if (value is string valueString)
+                        parameters[index] = new Parameter(key, valueString);
+                    else if (value is int valueInt)
+                        parameters[index] = new Parameter(key, valueInt);
+                    else if (value is long valueLong)
+                        parameters[index] = new Parameter(key, valueLong);
+                    else if (value is float valueFloat)
+                        parameters[index] = new Parameter(key, valueFloat);
+                    else if (value is double valueDouble)
+                        parameters[index] = new Parameter(key, valueDouble);
                     index++;
                 }
                 FirebaseAnalytics.LogEvent(eventName, parameters);

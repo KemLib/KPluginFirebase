@@ -157,10 +157,13 @@ MonoBehaviour:
     gameobjects:
     - {fileID: 507020056}
     - {fileID: 610600708}
-  afterInit: 0
-  nextScene: 
-  loadSceneMode: 0
   onBegin:
+    m_PersistentCalls:
+      m_Calls: []
+  onStep:
+    m_PersistentCalls:
+      m_Calls: []
+  onProgress:
     m_PersistentCalls:
       m_Calls: []
   onEnd:
@@ -226,8 +229,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   initIndispensable: 0
-  userName: 
-  propertyName: 
 --- !u!1 &610600708
 GameObject:
   m_ObjectHideFlags: 0
@@ -273,7 +274,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   initIndispensable: 0
-  isDebugData: 1
   assets:
   - {fileID: 11400000, guid: 820ebe09eedd85048a0a3f3f90878cf1, type: 2}
   - {fileID: 11400000, guid: 4c362b01732faa045a0968413c2e6d7f, type: 2}
@@ -447,18 +447,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 11fe5fbd15868e241b5e4570bd4db2a9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  onInit:
-    m_PersistentCalls:
-      m_Calls: []
-  onComplete:
-    m_PersistentCalls:
-      m_Calls: []
-  onProgress:
-    m_PersistentCalls:
-      m_Calls: []
-  onTaskName:
-    m_PersistentCalls:
-      m_Calls: []
 --- !u!4 &1882210988
 Transform:
   m_ObjectHideFlags: 0
@@ -479,6 +467,6 @@ SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
   - {fileID: 1055095047}
+  - {fileID: 1304384307}
   - {fileID: 83489584}
   - {fileID: 1882210988}
-  - {fileID: 1304384307}
